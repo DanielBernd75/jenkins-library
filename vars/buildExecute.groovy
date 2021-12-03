@@ -85,19 +85,11 @@ void call(Map parameters = [:]) {
             case 'npm':
                 npmExecuteScripts script: script, install: config.npmInstall, runScripts: config.npmRunScripts
                 break
-            case ['docker', 'kaniko']:
+            case 'docker':
                 DockerUtils dockerUtils = new DockerUtils(script)
-                if (config.buildTool == 'docker' && !dockerUtils.withDockerDaemon()) {
-                    config.buildTool = 'kaniko'
-                    echo "[${STEP_NAME}] No Docker daemon available, thus switching to Kaniko build"
-                }
-                if (config.buildTool == 'kaniko'){
-                    kanikoExecute script: script
-                }else{
-                    ConfigurationHelper.newInstance(this, config)
-                                    .withMandatoryProperty('dockerImageName')
-                                    .withMandatoryProperty('dockerImageTag')
-
+                ConfigurationHelper.newInstance(this, config)
+                    .withMandatoryProperty('dockerImageName')
+                    .withMandatoryProperty('dockerImageTag')
                     def dockerImageNameAndTag = "${config.dockerImageName}:${config.dockerImageTag}"
                     def dockerBuildImage = docker.build(dockerImageNameAndTag, "${config.containerBuildOptions ?: ''} .")
                     //only push if registry is defined
@@ -105,7 +97,6 @@ void call(Map parameters = [:]) {
                         containerPushToRegistry script: script, dockerBuildImage: dockerBuildImage, dockerRegistryUrl: config.dockerRegistryUrl
                     }
                     script.commonPipelineEnvironment.setValue('containerImage', dockerImageNameAndTag)
-                }
                 break
             default:
                 if (config.dockerImage && config.dockerCommand) {
