@@ -345,4 +345,19 @@ class BuildExecuteTest extends BasePiperTest {
         assertThat(pushParams.dockerBuildImage, nullValue())
         assertThat(pushParams.dockerRegistryUrl, nullValue())
     }
+
+    @Test
+    void testKaniko() {
+        def buildToolCalled = false
+        helper.registerAllowedMethod('kanikoExecute', [Map.class], { m ->
+            buildToolCalled = true
+            return
+        })
+        stepRule.step.buildExecute(
+            script: nullScript,
+            buildTool: 'kaniko',
+        )
+        assertThat(buildToolCalled, is(true))
+    }
+
 }
